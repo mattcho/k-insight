@@ -22,6 +22,8 @@ T_SRV_LST: 서버목록
 
 T_SCH_CNF: 스케줄 설정
 T_SCH_LOG: 스케줄 로그
+V_DART_X0100: 기업목록 스케줄
+V_DART_X0100: 보고서 스케줄
 
 T_ACC_CD: 계정코드표
 T_CMM_CD: 공통코드
@@ -36,4 +38,9 @@ dart X0100: 기업목록 수집
      X0300: 재무제표 수집 ( BS, IS, CF )
 
 
-#
+#DART SCHEDULE
+
+THREAD1: 기업목록 수집, 주 1회
+THREAD2: 보고서목록 수집, 매일 1회, 수집일 -3일 부터 수집일까지
+THREAD3: 요청목록 수집, 요청 테이블 queue
+
