@@ -2,7 +2,8 @@
 
 ## Mimimal Viable Product (MVP)
 
-### Value Proposition: SQL 을 모르는 사용자도 조건을 직관적인 User Interface 에서 생성하여 해당 조건에 부합하는 기업을 편리하게 검색할 수 있도록 함.
+### Value Proposition
+ - SQL 을 모르는 사용자도 조건을 직관적인 User Interface 에서 생성하여 해당 조건에 부합하는 기업을 편리하게 검색할 수 있도록 함.
 
 ## Requirements
 1. KOSPI/KOSDAQ에 상장되어 있는 모든 기업이 금융감독원 사이트 (dart.fss.or.kr) 에 공시하는 아래 3가지 레포트의 내용을 데이터베이스에 저장한다.
