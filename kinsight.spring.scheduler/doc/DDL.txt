@@ -1,0 +1,37 @@
+/*
+	schema view for mariadb
+*/
+CREATE VIEW V_SCHEMA
+AS
+SELECT
+	tbl.TABLE_SCHEMA AS table_schema
+	, tbl.TABLE_NAME AS table_name
+	, tbl.TABLE_TYPE AS table_type
+	, date_format(tbl.CREATE_TIME,'%Y-%m-%d %H:%i:%s') AS create_time
+	, tbl.TABLE_COMMENT AS table_comment
+	, clm.ORDINAL_POSITION AS ordinal_position
+	, clm.COLUMN_NAME AS column_name
+	, clm.DATA_TYPE AS data_type
+	, CASE
+		WHEN clm.DATA_TYPE = 'varchar' THEN clm.CHARACTER_MAXIMUM_LENGTH
+		WHEN clm.DATA_TYPE = 'int' THEN clm.NUMERIC_PRECISION
+		ELSE 0
+		END AS data_length
+	, CASE
+		WHEN clm.IS_NULLABLE = 'YES' THEN 'Y'
+		ELSE 'N'
+		END AS is_nullable
+	, CASE
+		WHEN clm.COLUMN_KEY = 'PRI' THEN 'PK'
+		ELSE ''
+		END AS column_key
+	, IFNULL(clm.COLUMN_DEFAULT, '') AS column_default
+	, IFNULL(clm.COLUMN_COMMENT, '') AS column_comment
+FROM
+	information_schema.tables tbl
+	, information_schema.columns clm
+WHERE 1 = 1
+	AND clm.TABLE_NAME = tbl.TABLE_NAME
+	AND tbl.TABLE_SCHEMA = 'kinsight'
+ORDER BY tbl.TABLE_NAME, clm.ORDINAL_POSITION 
+;
