@@ -1,0 +1,39 @@
+#ID
+
+동욱: mattcho
+성일: ????
+종승: seung
+
+#DB
+
+T_EX_REQ_ORG: 기관 목록
+T_EX_REQ_SVC: 서비스 목록
+T_EX_REQ_PRM: 파라미터 목록
+V_EX_REQ or P_EX_REQ
+
+T_D_CRP: 기업 목록
+T_D_DOC: 보고서 목록 (분기, 사업 ...)
+T_D_RPT: 보고서 목록 (BS, IS, CF)
+T_D_BS: BS
+T_D_IS: IS
+T_D_CF: CF
+
+T_SRV_LST: 서버목록
+
+T_SCH_CNF: 스케줄 설정
+T_SCH_LOG: 스케줄 로그
+
+T_ACC_CD: 계정코드표
+T_CMM_CD: 공통코드
+
+T_CNN_LOG: 접속정보
+
+#EX
+
+dart X0100: 기업목록 수집
+     X0101: 기업상세 수집
+     X0200: 보고서 수집
+     X0300: 재무제표 수집 ( BS, IS, CF )
+
+
+#
