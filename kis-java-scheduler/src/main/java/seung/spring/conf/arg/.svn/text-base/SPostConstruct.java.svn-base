@@ -1,0 +1,11 @@
+package seung.app.conf.arg;
+
+public class SPostConstruct {
+
+//	@PostConstruct
+//	public void setSPostConstruct() {
+//	}
+//	
+//	public void getSPostConstruct(SMap sMap) {
+//	}
+}

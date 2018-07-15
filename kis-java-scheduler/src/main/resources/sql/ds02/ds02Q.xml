@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sql.ds02.ds02Q">
+
+<parameterMap id="sMapP" type="seung.java.arg.SMap"></parameterMap>
+
+<resultMap id="sMapR" type="seung.java.arg.SMap"></resultMap>
+
+<select id="ds02Info" parameterMap="sMapP" resultMap="sMapR">
+	<![CDATA[
+	SELECT
+		version() AS version
+		, schema_name AS schemaName
+		, default_character_set_name AS defaultCharacterSetName
+		, default_collation_name AS defaultCollationName
+	FROM
+		information_schema.schemata
+	WHERE 1 = 1
+		AND schema_name = (
+			SELECT database()
+		)
+	]]>
+</select>
+
+</mapper>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sql.ds01.dartQ">
+
+<parameterMap id="sMapP" type="seung.java.arg.SMap"></parameterMap>
+
+<resultMap id="sMapR" type="seung.java.arg.SMap"></resultMap>
+
+<select id="x0100SR" parameterMap="sMapP" resultMap="sMapR">
+	<![CDATA[
+	SELECT
+		*
+	FROM
+		v_dart_x0100_run
+	]]>
+</select>
+
+<update id="x0199UR" parameterMap="sMapP">
+	<![CDATA[
+	UPDATE t_sch_cnf
+	SET
+		sch_dt_run = DATE_FORMAT(CONVERT_TZ(now(), @@session.time_zone, '+09:00'), '%Y%m%d%H%i%s')
+		, is_force = 0
+	WHERE 1 = 1
+		AND sch_no = #{schNo}
+		AND org_cd = #{orgCd}
+		AND job_cd = #{jobCd}
+	;
+	]]>
+</update>
+
+<insert id="x0100IR" parameterMap="sMapP">
+	<![CDATA[
+	INSERT INTO t_dart_x0100 (
+		crp_cd
+		, dt_ir
+		, dt_ur
+		, dt_ex
+		, is_hidden
+		, cik_cd
+		, crp_nm_kr
+		, crp_nm_en
+		, crp_nm_mrk
+		, itm_cd
+		, ceo_nm
+		, mrk_tp_nm
+		, mrk_tp_cd
+		, crp_no
+		, biz_no
+		, crp_addr
+		, crp_url
+		, crp_url_ir
+		, crp_tel
+		, crp_fax
+		, biz_tp_nm
+		, dt_fnd
+		, dt_fy
+		)
+	SELECT
+		ex.*
+	FROM (
+		SELECT
+			#{crpCd}                                                                        AS crp_cd
+			, DATE_FORMAT(CONVERT_TZ(now(), @@session.time_zone, '+09:00'), '%Y%m%d%H%i%s') AS dt_ir
+			, DATE_FORMAT(CONVERT_TZ(now(), @@session.time_zone, '+09:00'), '%Y%m%d%H%i%s') AS dt_ur
+			, DATE_FORMAT(CONVERT_TZ(now(), @@session.time_zone, '+09:00'), '%Y%m%d%H%i%s') AS dt_ex
+			, 0                                                                             AS is_hidden
+			, #{cikCd}                                                                      AS cik_cd
+			, #{crpNmKr}                                                                    AS crp_nm_kr
+			, #{crpNmEn}                                                                    AS crp_nm_en
+			, #{crpNmMrk}                                                                   AS crp_nm_mrk
+			, #{itmCd}                                                                      AS itm_cd
+			, #{ceoNm}                                                                      AS ceo_nm
+			, #{mrkTpNm}                                                                    AS mrk_tp_nm
+			, CASE
+				WHEN '유가증권시장' = #{mrkTpNm} THEN 'P'
+				WHEN '코스닥시장' = #{mrkTpNm} THEN 'A'
+				WHEN '코스넥시장' = #{mrkTpNm} THEN 'N'
+				WHEN '기타법인' = #{mrkTpNm} THEN 'E'
+				ELSE ''
+				END AS mrk_tp_cd
+			, #{crpNo}                                                                      AS crp_no
+			, #{bizNo}                                                                      AS biz_no
+			, #{crpAddr}                                                                    AS crp_addr
+			, #{crpUrl}                                                                     AS crp_url
+			, #{crpUrlIr}                                                                   AS crp_url_ir
+			, #{crpTel}                                                                     AS crp_tel
+			, #{crpFax}                                                                     AS crp_fax
+			, #{bizTpNm}                                                                    AS biz_tp_nm
+			, #{dtFnd}                                                                      AS dt_fnd
+			, #{dtFy}                                                                       AS dt_fy
+		) ex
+		LEFT OUTER JOIN t_dart_x0100 dx0100
+			ON 1 = 1
+			AND dx0100.cik_cd = ex.cik_cd
+	WHERE 1 = 1
+		AND dx0100.cik_cd IS NULL
+	]]>
+</insert>
+
+</mapper>

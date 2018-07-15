@@ -1,0 +1,167 @@
+/*
+	schema view for mariadb
+*/
+CREATE VIEW IF NOT EXISTS v_schema
+AS
+SELECT
+	tbl.table_schema                                   AS table_schema
+	, tbl.table_name                                   AS table_name
+	, tbl.table_type                                   AS table_type
+	, DATE_FORMAT(tbl.create_time,'%Y-%m-%d %H:%i:%s') AS create_time
+	, tbl.table_comment                                AS table_comment
+	, clm.ordinal_position                             AS ordinal_position
+	, clm.column_name                                  AS column_name
+	, clm.data_type                                    AS data_type
+	, CASE
+		WHEN clm.data_type = 'varchar' THEN clm.character_maximum_length
+		WHEN clm.data_type = 'int'     THEN clm.numeric_precision
+		ELSE 0
+		END AS data_length
+	, clm.is_nullable                                  AS is_nullable
+	, clm.column_key                                   AS column_key
+	, IFNULL(clm.column_default, '')                   AS column_default
+	, IFNULL(clm.column_comment, '')                   AS column_comment
+	, CONCAT(', ', clm.column_name)                    AS sql1
+FROM
+	information_schema.tables tbl
+	, information_schema.columns clm
+WHERE 1 = 1
+	AND clm.table_name = tbl.table_name
+	AND tbl.table_schema = 'kinsight'
+ORDER BY tbl.table_name, clm.ordinal_position
+;
+
+/*
+	connect server information
+*/
+CREATE TABLE IF NOT EXISTS t_srv_lst (
+	srv_cd      varchar(36)  NOT NULL COMMENT 'server code'
+	, dt_ir     bigint       NOT NULL COMMENT '1st insert datetime'
+	, dt_ur     bigint       NOT NULL COMMENT 'final connection datetime'
+	, srv_os    varchar(64)  NOT NULL COMMENT 'os name'
+	, srv_host  varchar(64)  NOT NULL COMMENT 'host name'
+	, srv_ip    varchar(16)  NOT NULL COMMENT 'ip address'
+	, srv_mac   varchar(512)     NULL COMMENT 'mac address'
+	, PRIMARY KEY (srv_cd)
+) COMMENT='connect server information'
+;
+
+/*
+	scheule configuration
+*/
+CREATE TABLE IF NOT EXISTS t_sch_cnf (
+	sch_no         int          NOT NULL  AUTO_INCREMENT
+	, org_cd       varchar(16)  NOT NULL                  COMMENT 'oranization or site code'
+	, job_cd       varchar(8)   NOT NULL                  COMMENT 'job code'
+	, dt_ir        bigint       NOT NULL  DEFAULT 0       COMMENT '1st insert datetime'
+	, dt_ur        bigint       NOT NULL  DEFAULT 0       COMMENT 'last update datetime'
+	, is_run       int          NOT NULL  DEFAULT 0       COMMENT '0: stop, 1: run'
+	, is_force     int          NOT NULL  DEFAULT 0       COMMENT '0: false, 1:true'
+	, sch_slp      int          NOT NULL  DEFAULT 1000    COMMENT 'http connection sleep time, 1s = 1 * 1000'
+	, sch_prd_tp   varchar(4)       NULL  DEFAULT ''      COMMENT 'WN: week number, D: yyyyMMdd, ED: every day'
+	, sch_prd_val  varchar(1)       NULL  DEFAULT ''      COMMENT 'WN: 0(MON) ~ 6(SUN), D: yyyyMMdd, ED: HHmm'
+	, sch_tm_from  varchar(4)       NULL  DEFAULT '0000'  COMMENT 'HHMM, default: 0000'
+	, sch_tm_to    varchar(4)       NULL  DEFAULT '2359'  COMMENT 'HHMM, default: 2359'
+	, sch_ex_wn    varchar(16)      NULL  DEFAULT ''      COMMENT 'not activate the week number, delim: comma(,)'
+	, sch_dt_run   bigint           NULL  DEFAULT 0       COMMENT 'last run success datetime'
+	, PRIMARY KEY (sch_no, org_cd, job_cd)
+) COMMENT='scheduler configuration'
+;
+/*
+	scheule configuration update record
+*/
+DELIMITER $$
+CREATE PROCUDURE IF NOT EXIST p_sch_cnf_ur (
+	IN req_sch_no    int
+	, IN req_org_cd  varchar(16)
+	, IN req_job_cd  varchar(8)
+	, OUT res_result int
+)
+BEGIN
+
+	/*
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	BEGIN
+		ROLLBACK;
+		SET res_result = 0;
+	END;
+	*/
+	
+	/* transaction */
+	/*
+	START TRANSACTION;
+	*/
+	
+		UPDATE t_sch_cnf
+		SET
+			sch_dt_run = DATE_FORMAT(CONVERT_TZ(now(), @@session.time_zone, '+09:00'), '%Y%m%d%H%i%s')
+			, is_force = 0
+		WHERE 1 = 1
+			AND sch_no = req_sch_no
+			AND org_cd = req_org_cd
+			AND job_cd = req_job_cd
+		;
+		
+	/*
+		COMMIT;
+	*/
+	/* transaction */
+	
+	SET res_result = 1;
+	
+END $$
+DELIMITER
+;
+/*
+	x0100 run configuration
+*/
+CREATE VIEW IF NOT EXISTS v_dart_x0100_run
+AS
+SELECT
+	sch_no    AS schNo
+	, org_cd  AS orgCd
+	, job_cd  AS jobCd
+	, sch_slp AS sleep
+	, CASE
+		WHEN is_force = 1 THEN 1
+		ELSE 0
+		END AS isRun
+	, 'P'     AS corporationType
+	, 'Y'     AS x0101
+FROM
+	t_sch_cnf
+WHERE 1 = 1
+	AND org_cd = 'dart'
+	AND job_cd = 'x0100'
+LIMIT 1
+;
+/*
+	dart corporation list
+*/
+CREATE TABLE IF NOT EXISTS t_dart_x0100 (
+	crp_cd        varchar(36)   NOT NULL             COMMENT 'finsight unique code'
+	, dt_ir       bigint        NOT NULL             COMMENT '1st insert datetime'
+	, dt_ur       bigint        NOT NULL             COMMENT 'last update datetime'
+	, dt_ex       bigint        NOT NULL  DEFAULT 0  COMMENT 'extract date'
+	, is_hidden   int           NOT NULL  DEFAULT 0  COMMENT 'hidden option'
+	, cik_cd      varchar(16)   NOT NULL             COMMENT 'dart record code'
+	, crp_nm_kr   varchar(128)      NULL             COMMENT 'corporation korean name'
+	, crp_nm_en   varchar(128)      NULL             COMMENT 'corporation english name'
+	, crp_nm_mrk  varchar(128)      NULL             COMMENT 'corporation market name'
+	, itm_cd      varchar(8)        NULL             COMMENT 'item code'
+	, ceo_nm      varchar(128)      NULL             COMMENT ''
+	, mrk_tp_nm   varchar(16)       NULL             COMMENT 'market type name'
+	, mrk_tp_cd   varchar(1)        NULL             COMMENT 'P: KOSPI, A: KOSDAQ, N: KONEX, E: etc'
+	, crp_no      varchar(16)       NULL             COMMENT 'corporation number'
+	, biz_no      varchar(16)       NULL             COMMENT 'business registation number'
+	, crp_addr    varchar(128)      NULL             COMMENT 'corporation address'
+	, crp_url     varchar(128)      NULL             COMMENT 'corporation url homepage'
+	, crp_url_ir  varchar(128)      NULL             COMMENT 'corporation url ir page'
+	, crp_tel     varchar(64)       NULL             COMMENT 'corporation tel'
+	, crp_fax     varchar(64)       NULL             COMMENT 'corporation fax'
+	, biz_tp_nm   varchar(256)      NULL             COMMENT 'business type name'
+	, dt_fnd      varchar(16)       NULL             COMMENT 'foundation date'
+	, dt_fy       varchar(2)        NULL             COMMENT 'accounting fiscal year'
+	, PRIMARY KEY (crp_cd)
+) COMMENT='dart corporation list'
+;
