@@ -1,4 +1,4 @@
-# K-Insight
+# Project k-insight
 
 ## Installation
 
