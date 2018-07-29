@@ -1,17 +1,13 @@
 package kinsight.java.scheduler;
 
-import java.util.List;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
-import seung.java.arg.SMap;
+import seung.java.lib.arg.SMap;
 import seung.spring.conf.dao.SD01;
 import seung.spring.util.SCommonU;
 
@@ -29,7 +25,6 @@ public class SPostConstruct {
 	@Resource(name = "sD01")
 	private SD01 sD01;
 	
-	@SuppressWarnings("unchecked")
 	@PostConstruct
 	public void initSPostConstruct() {
 		
@@ -47,11 +42,6 @@ public class SPostConstruct {
 				sD01.db01IR("serverUR", serverSR);
 			}
 			sSchedulerProperties.putAll(serverSR);
-			
-//		List<SMap> serviceSL = sD01.db01SL("serviceSL");
-//		for(SMap serviceSR : serviceSL) {
-//			sSchedulerProperties.put(serviceSR.get("serviceId"), serviceSR);
-//		}
 			
 			logger.info(sSchedulerProperties.toString(true));
 			

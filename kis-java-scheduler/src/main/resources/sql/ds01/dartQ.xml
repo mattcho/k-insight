@@ -3,9 +3,9 @@
 
 <mapper namespace="sql.ds01.dartQ">
 
-<parameterMap id="sMapP" type="seung.java.arg.SMap"></parameterMap>
+<parameterMap id="sMapP" type="seung.java.lib.arg.SMap"></parameterMap>
 
-<resultMap id="sMapR" type="seung.java.arg.SMap"></resultMap>
+<resultMap id="sMapR" type="seung.java.lib.arg.SMap"></resultMap>
 
 <select id="x0100SR" parameterMap="sMapP" resultMap="sMapR">
 	<![CDATA[
@@ -20,7 +20,7 @@
 	<![CDATA[
 	UPDATE t_sch_cnf
 	SET
-		sch_dt_run = DATE_FORMAT(CONVERT_TZ(now(), @@session.time_zone, '+09:00'), '%Y%m%d%H%i%s')
+		sch_dt_run = DATE_FORMAT(now(), '%Y%m%d%H%i%s')
 		, is_force = 0
 	WHERE 1 = 1
 		AND sch_no = #{schNo}
@@ -36,7 +36,10 @@
 		crp_cd
 		, dt_ir
 		, dt_ur
-		, dt_ex
+		, ext_dt
+		, ext_rsl_cd
+		, ext_rsl_msg
+		, ext_srv_cd
 		, is_hidden
 		, cik_cd
 		, crp_nm_kr
@@ -44,8 +47,8 @@
 		, crp_nm_mrk
 		, itm_cd
 		, ceo_nm
-		, mrk_tp_nm
-		, mrk_tp_cd
+		, mrk_typ_nm
+		, mrk_typ_cd
 		, crp_no
 		, biz_no
 		, crp_addr
@@ -55,48 +58,260 @@
 		, crp_fax
 		, biz_tp_nm
 		, dt_fnd
-		, dt_fy
+		, cls_mon
 		)
 	SELECT
-		ex.*
+		ext.*
 	FROM (
 		SELECT
-			#{crpCd}                                                                        AS crp_cd
-			, DATE_FORMAT(CONVERT_TZ(now(), @@session.time_zone, '+09:00'), '%Y%m%d%H%i%s') AS dt_ir
-			, DATE_FORMAT(CONVERT_TZ(now(), @@session.time_zone, '+09:00'), '%Y%m%d%H%i%s') AS dt_ur
-			, DATE_FORMAT(CONVERT_TZ(now(), @@session.time_zone, '+09:00'), '%Y%m%d%H%i%s') AS dt_ex
-			, 0                                                                             AS is_hidden
-			, #{cikCd}                                                                      AS cik_cd
-			, #{crpNmKr}                                                                    AS crp_nm_kr
-			, #{crpNmEn}                                                                    AS crp_nm_en
-			, #{crpNmMrk}                                                                   AS crp_nm_mrk
-			, #{itmCd}                                                                      AS itm_cd
-			, #{ceoNm}                                                                      AS ceo_nm
-			, #{mrkTpNm}                                                                    AS mrk_tp_nm
-			, CASE
-				WHEN '유가증권시장' = #{mrkTpNm} THEN 'P'
-				WHEN '코스닥시장' = #{mrkTpNm} THEN 'A'
-				WHEN '코스넥시장' = #{mrkTpNm} THEN 'N'
-				WHEN '기타법인' = #{mrkTpNm} THEN 'E'
-				ELSE ''
-				END AS mrk_tp_cd
-			, #{crpNo}                                                                      AS crp_no
-			, #{bizNo}                                                                      AS biz_no
-			, #{crpAddr}                                                                    AS crp_addr
-			, #{crpUrl}                                                                     AS crp_url
-			, #{crpUrlIr}                                                                   AS crp_url_ir
-			, #{crpTel}                                                                     AS crp_tel
-			, #{crpFax}                                                                     AS crp_fax
-			, #{bizTpNm}                                                                    AS biz_tp_nm
-			, #{dtFnd}                                                                      AS dt_fnd
-			, #{dtFy}                                                                       AS dt_fy
-		) ex
+			#{crpCd}                             AS crp_cd
+			, DATE_FORMAT(now(), '%Y%m%d%H%i%s') AS dt_ir
+			, DATE_FORMAT(now(), '%Y%m%d%H%i%s') AS dt_ur
+			, DATE_FORMAT(now(), '%Y%m%d%H%i%s') AS ext_dt
+			, #{rslCd}                           AS ext_rsl_cd
+			, #{rslMsg}                          AS ext_rsl_msg
+			, #{srvCd}                           AS ext_svr_cd
+			, 0                                  AS is_hidden
+			, #{cikCd}                           AS cik_cd
+			, #{crpNmKr}                         AS crp_nm_kr
+			, #{crpNmEn}                         AS crp_nm_en
+			, #{crpNmMrk}                        AS crp_nm_mrk
+			, #{itmCd}                           AS itm_cd
+			, #{ceoNm}                           AS ceo_nm
+			, #{mrkTypNm}                        AS mrk_typ_nm
+			, #{mrkTypCd}                        AS mrk_typ_cd
+			, #{crpNo}                           AS crp_no
+			, #{bizNo}                           AS biz_no
+			, #{crpAddr}                         AS crp_addr
+			, #{crpUrl}                          AS crp_url
+			, #{crpUrlIr}                        AS crp_url_ir
+			, #{crpTel}                          AS crp_tel
+			, #{crpFax}                          AS crp_fax
+			, #{bizTpNm}                         AS biz_tp_nm
+			, #{dtFnd}                           AS dt_fnd
+			, #{clsMon}                          AS cls_mon
+		) ext
 		LEFT OUTER JOIN t_dart_x0100 dx0100
 			ON 1 = 1
-			AND dx0100.cik_cd = ex.cik_cd
+			AND dx0100.crp_cd = ex.crp_cd
 	WHERE 1 = 1
-		AND dx0100.cik_cd IS NULL
+		AND dx0100.crp_cd IS NULL
 	]]>
 </insert>
+
+<select id="x0200SR" parameterMap="sMapP" resultMap="sMapR">
+	<![CDATA[
+	SELECT
+		*
+	FROM
+		v_dart_x0200_run
+	]]>
+</select>
+
+<update id="x0299UR" parameterMap="sMapP">
+	<![CDATA[
+	UPDATE t_sch_cnf
+	SET
+		sch_dt_run = DATE_FORMAT(now(), '%Y%m%d%H%i%s')
+		, is_force = 0
+	WHERE 1 = 1
+		AND sch_no = #{schNo}
+		AND org_cd = #{orgCd}
+		AND job_cd = #{jobCd}
+	;
+	]]>
+</update>
+
+<insert id="x0200IR" parameterMap="sMapP">
+	<![CDATA[
+	INSERT INTO t_dart_x0200 (
+		crp_cd
+		, rcp_no
+		, dt_ir
+		, dt_ur
+		, ext_dt
+		, ext_rsl_cd
+		, ext_rsl_msg
+		, ext_srv_cd
+		, is_hidden
+		, cik_cd
+		, crp_nm
+		, rcp_nm
+		, sbm_nm
+		, rcv_dt
+		, note
+		, dcm_no
+		, is_ext
+		)
+	SELECT
+		dx0100.crp_cd
+		, #{rcpNo}                           AS rcp_no
+		, DATE_FORMAT(now(), '%Y%m%d%H%i%s') AS dt_ir
+		, DATE_FORMAT(now(), '%Y%m%d%H%i%s') AS dt_ur
+		, DATE_FORMAT(now(), '%Y%m%d%H%i%s') AS ext_dt
+		, #{rslCd}                           AS ext_rsl_cd
+		, #{rslMsg}                          AS ext_rsl_msg
+		, #{srvCd}                           AS ext_svr_cd
+		, 0                                  AS is_hidden
+		, #{cikCd}                           AS cik_cd
+		, #{crpNm}                           AS crp_nm
+		, #{rcpNm}                           AS rcp_nm
+		, #{sbmNm}                           AS sbm_nm
+		, #{rcvDt}                           AS rcv_dt
+		, #{note}                            AS note
+		, ''                                 AS dcm_no
+		, 0                                  AS is_ext
+	FROM
+		t_dart_x0100 dx0100
+		LEFT OUTER JOIN t_dart_x0200 dx0200
+			ON 1 = 1
+			AND dx0200.crp_cd = dx0100.crp_cd
+			AND dx0200.rcp_no = #{rcpNo}
+	WHERE 1 = 1
+		AND dx0100.cik_cd = #{cikCd}
+		AND dx0200.crp_cd IS NULL
+	]]>
+</insert>
+
+<select id="x0300SR" parameterMap="sMapP" resultMap="sMapR">
+	<![CDATA[
+	SELECT
+		*
+	FROM
+		v_dart_x0300_run
+	]]>
+</select>
+
+<select id="x0300SL" parameterMap="sMapP" resultMap="sMapR">
+	<![CDATA[
+	SELECT
+		*
+	FROM
+		v_dart_x0301_run
+	]]>
+</select>
+
+<insert id="x0300IR" parameterMap="sMapP">
+	<![CDATA[
+	INSERT INTO t_dart_x0300 (
+		crp_cd
+		, rcp_no
+		, rpt_srt_cd
+		, acc_no
+		, dt_ir
+		, dt_ur
+		, ext_dt
+		, ext_rsl_cd
+		, ext_rsl_msg
+		, ext_srv_cd
+		, is_hidden
+		, dcm_no
+		, dcm_pth
+		, rpt_type_nm
+		, is_crr
+		, rpt_iss_dt
+		, acc_dt_str
+		, acc_dt_end
+		, cik_cd
+		, acc_dt_cls
+		, sum_emp
+		, sum_shr
+		, ind_cls_cd
+		, cur_iso_cd
+		)
+	SELECT
+		#{crpCd}                             AS crp_cd
+		, #{rcpNo}                           AS rcp_no
+		, #{rptSrtCd}                        AS rpt_srt_cd
+		, #{accNo}                           AS acc_no
+		, DATE_FORMAT(now(), '%Y%m%d%H%i%s') AS dt_ir
+		, DATE_FORMAT(now(), '%Y%m%d%H%i%s') AS dt_ur
+		, DATE_FORMAT(now(), '%Y%m%d%H%i%s') AS ext_dt
+		, #{rslCd}                           AS ext_rsl_cd
+		, #{rslMsg}                          AS ext_rsl_msg
+		, #{srvCd}                           AS ext_svr_cd
+		, 0                                  AS is_hidden
+		, #{dcmNo}                           AS dcm_no
+		, ''                                 AS dcm_pth
+		, #{rptTypeNm}                       AS rpt_type_nm
+		, #{isCrr}                           AS is_crr
+		, #{rptIssDt}                        AS rpt_iss_dt
+		, #{accDtStr}                        AS acc_dt_str
+		, #{accDtEnd}                        AS acc_dt_end
+		, #{cikCd}                           AS cik_cd
+		, #{accDtCls}                        AS acc_dt_cls
+		, #{sumEmp}                          AS sum_emp
+		, #{sumShr}                          AS sum_shr
+		, #{indClsCd}                        AS ind_cls_cd
+		, #{curIsoCd}                        AS cur_iso_cd
+	]]>
+</insert>
+
+<update id="x0300UR" parameterMap="sMapP">
+	<![CDATA[
+	UPDATE t_dart_x0200
+	SET
+		dt_ur = DATE_FORMAT(now(), '%Y%m%d%H%i%s')
+		, dcm_no = #{dcmNo}
+		, is_ext = 1
+	WHERE 1 = 1
+		AND crp_cd = #{crpCd}
+		AND rcp_no = #{rcpNo}
+	]]>
+</update>
+
+<insert id="x0301IR" parameterMap="sMapP">
+	<![CDATA[
+	INSERT INTO t_dart_x0301 (
+		crp_cd
+		, rcp_no
+		, rpt_srt_cd
+		, acc_no
+		, acc_ord
+		, dt_ir
+		, dt_ur
+		, is_hidden
+		, acc_nm
+		, acc_dpt
+		, acc_nm_cd
+		, acc_val
+		, acc_val_sgn
+		, acc_val_unt
+		, inc_qoq
+		, inc_yoy
+		)
+	SELECT
+		#{crpCd}                             AS crp_cd
+		, #{rcpNo}                           AS rcp_no
+		, #{rptSrtCd}                        AS rpt_srt_cd
+		, #{accNo}                           AS acc_no
+		, #{accOrd}                          AS acc_ord
+		, DATE_FORMAT(now(), '%Y%m%d%H%i%s') AS dt_ir
+		, DATE_FORMAT(now(), '%Y%m%d%H%i%s') AS dt_ur
+		, 0                                  AS is_hidden
+		, #{accNm}                           AS acc_nm
+		, #{accDpt}                          AS acc_dpt
+		, #{accNmCd}                         AS acc_nm_cd
+		, #{accVal}                          AS acc_val
+		, #{accValSgn}                       AS acc_val_sgn
+		, #{accValUnt}                       AS acc_val_unt
+		, 0                                  AS inc_qoq
+		, 0                                  AS inc_yoy
+	]]>
+</insert>
+
+<update id="x0399UR" parameterMap="sMapP">
+	<![CDATA[
+	UPDATE t_sch_cnf
+	SET
+		sch_dt_run = DATE_FORMAT(now(), '%Y%m%d%H%i%s')
+		, is_force = 0
+	WHERE 1 = 1
+		AND sch_no = #{schNo}
+		AND org_cd = #{orgCd}
+		AND job_cd = #{jobCd}
+	;
+	]]>
+</update>
 
 </mapper>

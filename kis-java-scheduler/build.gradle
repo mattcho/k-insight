@@ -33,14 +33,20 @@ dependencies {
 	
 	//commons
 	compile 'org.apache.commons:commons-lang3'
+	compile 'commons-io:commons-io:2.6'
 	
 	// json
 	compile 'com.google.code.gson:gson:2.8.5'
 	
 	// parser
 	compile group: 'org.jsoup', name: 'jsoup', version: '1.9.1'
-
 	
+	// poi
+	compile 'org.apache.poi:poi:3.17'
+	compile 'org.apache.poi:poi-ooxml:3.17'
+	
+	// seung
+	compile project(':seung-java-lib')
 	
 	// database
 	compile 'org.apache.commons:commons-dbcp2'

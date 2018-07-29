@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import seung.java.arg.SMap;
+import seung.java.lib.arg.SMap;
 
 @Component("sCommonU")
 public class SCommonU {

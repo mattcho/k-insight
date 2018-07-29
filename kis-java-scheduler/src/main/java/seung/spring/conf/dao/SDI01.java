@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
-import seung.java.arg.SMap;
+import seung.java.lib.arg.SMap;
 
 @Repository("sD01")
 public class SDI01 implements SD01 {

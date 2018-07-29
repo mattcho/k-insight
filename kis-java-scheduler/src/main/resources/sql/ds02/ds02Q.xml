@@ -3,9 +3,9 @@
 
 <mapper namespace="sql.ds02.ds02Q">
 
-<parameterMap id="sMapP" type="seung.java.arg.SMap"></parameterMap>
+<parameterMap id="sMapP" type="seung.java.lib.arg.SMap"></parameterMap>
 
-<resultMap id="sMapR" type="seung.java.arg.SMap"></resultMap>
+<resultMap id="sMapR" type="seung.java.lib.arg.SMap"></resultMap>
 
 <select id="ds02Info" parameterMap="sMapP" resultMap="sMapR">
 	<![CDATA[

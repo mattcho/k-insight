@@ -2,7 +2,7 @@ package seung.spring.conf.dao;
 
 import java.util.List;
 
-import seung.java.arg.SMap;
+import seung.java.lib.arg.SMap;
 
 public interface SD02 {
 

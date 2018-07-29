@@ -1,1 +1,4 @@
 rootProject.name = 'kis-java-scheduler'
+
+include ':seung-java-lib'
+project(':seung-java-lib').projectDir = new File('/Users/seung/Desktop/dev/sts/workspace-github/seung-java-lib')

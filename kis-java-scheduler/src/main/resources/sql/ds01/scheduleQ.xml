@@ -3,9 +3,9 @@
 
 <mapper namespace="sql.ds01.scheduleQ">
 
-<parameterMap id="sMapP" type="seung.java.arg.SMap"></parameterMap>
+<parameterMap id="sMapP" type="seung.java.lib.arg.SMap"></parameterMap>
 
-<resultMap id="sMapR" type="seung.java.arg.SMap"></resultMap>
+<resultMap id="sMapR" type="seung.java.lib.arg.SMap"></resultMap>
 
 <select id="serverSR" parameterMap="sMapP" resultMap="sMapR">
 	<![CDATA[
@@ -36,8 +36,8 @@
 		, #{hostName}
 		, #{ip}
 		, #{mac}
-		, DATE_FORMAT(CONVERT_TZ(now(), @@session.time_zone, '+09:00'), '%Y%m%d%H%i%s')
-		, DATE_FORMAT(CONVERT_TZ(now(), @@session.time_zone, '+09:00'), '%Y%m%d%H%i%s')
+		, DATE_FORMAT(now(), '%Y%m%d%H%i%s')
+		, DATE_FORMAT(now(), '%Y%m%d%H%i%s')
 		)
 	]]>
 </insert>
@@ -46,7 +46,7 @@
 	<![CDATA[
 	UPDATE t_srv_lst
 	SET
-		dt_ur = DATE_FORMAT(CONVERT_TZ(now(), @@session.time_zone, '+09:00'), '%Y%m%d%H%i%s')
+		dt_ur = DATE_FORMAT(now(), '%Y%m%d%H%i%s')
 	WHERE 1 = 1
 		AND srv_cd = #{srvCd}
 	]]>

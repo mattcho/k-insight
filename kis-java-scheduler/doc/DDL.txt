@@ -1,120 +1,218 @@
 /*
 	schema view for mariadb
 */
+DROP VIEW IF EXISTS v_schema;
 CREATE VIEW IF NOT EXISTS v_schema
 AS
 SELECT
-	tbl.table_schema                                   AS table_schema
-	, tbl.table_name                                   AS table_name
-	, tbl.table_type                                   AS table_type
-	, DATE_FORMAT(tbl.create_time,'%Y-%m-%d %H:%i:%s') AS create_time
-	, tbl.table_comment                                AS table_comment
-	, clm.ordinal_position                             AS ordinal_position
-	, clm.column_name                                  AS column_name
-	, clm.data_type                                    AS data_type
+	t.table_schema                                        AS table_schema
+	, t.table_name                                        AS table_name
+	, t.table_type                                        AS table_type
+	, DATE_FORMAT(t.create_time,'%Y-%m-%d %H:%i:%s')      AS create_time
+	, t.table_comment                                     AS table_comment
+	, c.ordinal_position                                  AS ordinal_position
+	, c.column_name                                       AS column_name
+	, c.data_type                                         AS data_type
 	, CASE
-		WHEN clm.data_type = 'varchar' THEN clm.character_maximum_length
-		WHEN clm.data_type = 'int'     THEN clm.numeric_precision
+		WHEN c.data_type = 'varchar' THEN c.character_maximum_length
+		WHEN c.data_type = 'int'     THEN c.numeric_precision
 		ELSE 0
 		END AS data_length
-	, clm.is_nullable                                  AS is_nullable
-	, clm.column_key                                   AS column_key
-	, IFNULL(clm.column_default, '')                   AS column_default
-	, IFNULL(clm.column_comment, '')                   AS column_comment
-	, CONCAT(', ', clm.column_name)                    AS sql1
+	, c.is_nullable                                       AS is_nullable
+	, c.column_key                                        AS column_key
+	, IFNULL(c.column_default, '')                        AS column_default
+	, IFNULL(c.column_comment, '')                        AS column_comment
+	, CONCAT(', ', c.column_name)                         AS sql1
+	, CONCAT(', #{', c.column_name, '}')                  AS sql2
+	, CONCAT(', ', c.column_name, ' = ', c.column_name) AS sql3
 FROM
-	information_schema.tables tbl
-	, information_schema.columns clm
+	information_schema.tables t
+	, information_schema.columns c
 WHERE 1 = 1
-	AND clm.table_name = tbl.table_name
-	AND tbl.table_schema = 'kinsight'
-ORDER BY tbl.table_name, clm.ordinal_position
+	AND c.table_name = t.table_name
+	AND t.table_schema = DATABASE()
+ORDER BY t.table_name, c.ordinal_position
 ;
 
 /*
 	connect server information
 */
+DROP TABLE IF EXISTS t_srv_lst;
 CREATE TABLE IF NOT EXISTS t_srv_lst (
-	srv_cd      varchar(36)  NOT NULL COMMENT 'server code'
-	, dt_ir     bigint       NOT NULL COMMENT '1st insert datetime'
-	, dt_ur     bigint       NOT NULL COMMENT 'final connection datetime'
-	, srv_os    varchar(64)  NOT NULL COMMENT 'os name'
-	, srv_host  varchar(64)  NOT NULL COMMENT 'host name'
-	, srv_ip    varchar(16)  NOT NULL COMMENT 'ip address'
-	, srv_mac   varchar(512)     NULL COMMENT 'mac address'
+	srv_cd      varchar(36)   NOT NULL COMMENT '서버아이디'
+	, dt_ir     varchar(14)   NOT NULL COMMENT '최초등록일'
+	, dt_ur     varchar(14)   NOT NULL COMMENT '최신수정일'
+	, srv_os    varchar(64)   NOT NULL COMMENT 'os name'
+	, srv_host  varchar(64)   NOT NULL COMMENT 'host name'
+	, srv_ip    varchar(16)   NOT NULL COMMENT 'ip address'
+	, srv_mac   varchar(512)      NULL COMMENT 'mac address'
 	, PRIMARY KEY (srv_cd)
-) COMMENT='connect server information'
+) COMMENT='연결 서버 정보'
 ;
 
 /*
 	scheule configuration
 */
+DROP TABLE IF EXISTS t_sch_cnf;
 CREATE TABLE IF NOT EXISTS t_sch_cnf (
-	sch_no         int          NOT NULL  AUTO_INCREMENT
-	, org_cd       varchar(16)  NOT NULL                  COMMENT 'oranization or site code'
-	, job_cd       varchar(8)   NOT NULL                  COMMENT 'job code'
-	, dt_ir        bigint       NOT NULL  DEFAULT 0       COMMENT '1st insert datetime'
-	, dt_ur        bigint       NOT NULL  DEFAULT 0       COMMENT 'last update datetime'
-	, is_run       int          NOT NULL  DEFAULT 0       COMMENT '0: stop, 1: run'
-	, is_force     int          NOT NULL  DEFAULT 0       COMMENT '0: false, 1:true'
-	, sch_slp      int          NOT NULL  DEFAULT 1000    COMMENT 'http connection sleep time, 1s = 1 * 1000'
-	, sch_prd_tp   varchar(4)       NULL  DEFAULT ''      COMMENT 'WN: week number, D: yyyyMMdd, ED: every day'
-	, sch_prd_val  varchar(1)       NULL  DEFAULT ''      COMMENT 'WN: 0(MON) ~ 6(SUN), D: yyyyMMdd, ED: HHmm'
-	, sch_tm_from  varchar(4)       NULL  DEFAULT '0000'  COMMENT 'HHMM, default: 0000'
-	, sch_tm_to    varchar(4)       NULL  DEFAULT '2359'  COMMENT 'HHMM, default: 2359'
-	, sch_ex_wn    varchar(16)      NULL  DEFAULT ''      COMMENT 'not activate the week number, delim: comma(,)'
-	, sch_dt_run   bigint           NULL  DEFAULT 0       COMMENT 'last run success datetime'
+	sch_no         int           NOT NULL  AUTO_INCREMENT
+	, org_cd       varchar(16)   NOT NULL                  COMMENT '기관코드'
+	, job_cd       varchar(8)    NOT NULL                  COMMENT '업무코드'
+	, dt_ir        varchar(14)   NOT NULL                  COMMENT '최초등록일'
+	, dt_ur        varchar(14)   NOT NULL                  COMMENT '최신수정일'
+	, is_run       int           NOT NULL  DEFAULT 0       COMMENT '0: stop, 1: run'
+	, is_force     int           NOT NULL  DEFAULT 0       COMMENT '0: false, 1:true'
+	, sch_slp      int           NOT NULL  DEFAULT 1000    COMMENT '내부 수집간격'
+	, sch_desc     varchar(128)      NULL                  COMMENT '스케줄 설명'
+	, sch_prd_tp   varchar(4)        NULL  DEFAULT ''      COMMENT 'WN: 특정요일마다, D: 특정일, T: 특정시간마다'
+	, sch_prd_val  varchar(1)        NULL  DEFAULT ''      COMMENT 'WN: 0(MON) ~ 6(SUN), D: yyyyMMdd, T: HHmm'
+	, sch_tm_from  varchar(4)        NULL  DEFAULT '0000'  COMMENT '스케줄 체크시간 시작(HHmm)'
+	, sch_tm_to    varchar(4)        NULL  DEFAULT '2359'  COMMENT '스케줄 체크시간 종료(HHmm)'
+	, sch_exc      varchar(64)       NULL  DEFAULT ''      COMMENT '스케줄 중지일 또는 요일(0 ~ 6), 구분자: 쉼표(,)'
+	, sch_opt      varchar(256)      NULL  DEFAULT ''      COMMENT '스케줄 동작시 업무 옵션, 최우선순위'
+	, sch_dt_run   varchar(14)       NULL  DEFAULT ''      COMMENT '스케줄 설정 체크일'
 	, PRIMARY KEY (sch_no, org_cd, job_cd)
 ) COMMENT='scheduler configuration'
 ;
+INSERT INTO t_sch_cnf (
+	org_cd
+	, job_cd
+	, dt_ir
+	, dt_ur
+	, is_run
+	, is_force
+	, sch_slp
+	, sch_desc
+	, sch_prd_tp
+	, sch_prd_val
+	, sch_tm_from
+	, sch_tm_to
+	, sch_exc
+	, sch_opt
+	, sch_dt_run
+	)
+SELECT
+	'dart'
+	, 'x0100'
+	, DATE_FORMAT(now(), '%Y%m%d%H%i%s')
+	, DATE_FORMAT(now(), '%Y%m%d%H%i%s')
+	, 0
+	, 0
+	, 1000
+	, '기업수집, 최초수집 이후 보고서 갱신시 추가된 회사고유번호가 있을경우 수집'
+	, ''
+	, ''
+	, '0600'
+	, '2100'
+	, '5,6'
+	, ''
+	, ''
+	;
+INSERT INTO t_sch_cnf (
+	org_cd
+	, job_cd
+	, dt_ir
+	, dt_ur
+	, is_run
+	, is_force
+	, sch_slp
+	, sch_desc
+	, sch_prd_tp
+	, sch_prd_val
+	, sch_tm_from
+	, sch_tm_to
+	, sch_exc
+	, sch_opt
+	, sch_dt_run
+	)
+SELECT
+	'dart'
+	, 'x0200'
+	, DATE_FORMAT(now(), '%Y%m%d%H%i%s')
+	, DATE_FORMAT(now(), '%Y%m%d%H%i%s')
+	, 0
+	, 0
+	, 1000
+	, '보고서 목록 수집, 최초수집 이후 매일 새벽 최신 3일간 업데이트 보고서 확인후 미등록 보고서 등'
+	, ''
+	, ''
+	, '0600'
+	, '2100'
+	, '5,6'
+	, ''
+	, ''
+	;
+INSERT INTO t_sch_cnf (
+	org_cd
+	, job_cd
+	, dt_ir
+	, dt_ur
+	, is_run
+	, is_force
+	, sch_slp
+	, sch_desc
+	, sch_prd_tp
+	, sch_prd_val
+	, sch_tm_from
+	, sch_tm_to
+	, sch_exc
+	, sch_opt
+	, sch_dt_run
+	)
+SELECT
+	'dart'
+	, 'x0300'
+	, DATE_FORMAT(now(), '%Y%m%d%H%i%s')
+	, DATE_FORMAT(now(), '%Y%m%d%H%i%s')
+	, 0
+	, 0
+	, 1000
+	, '등록된 보고서 목록 중 미수집 보고서가 있을경우 해당 보고서 엑셀다운로드 수집'
+	, ''
+	, ''
+	, '0600'
+	, '2100'
+	, '5,6'
+	, ''
+	, ''
+	;
 /*
 	scheule configuration update record
 */
+/*
 DELIMITER $$
-CREATE PROCUDURE IF NOT EXIST p_sch_cnf_ur (
+CREATE PROCEDURE p_sch_cnf_ur (
 	IN req_sch_no    int
-	, IN req_org_cd  varchar(16)
-	, IN req_job_cd  varchar(8)
 	, OUT res_result int
 )
 BEGIN
 
-	/*
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION
 	BEGIN
 		ROLLBACK;
 		SET res_result = 0;
 	END;
-	*/
 	
-	/* transaction */
-	/*
 	START TRANSACTION;
-	*/
 	
 		UPDATE t_sch_cnf
 		SET
-			sch_dt_run = DATE_FORMAT(CONVERT_TZ(now(), @@session.time_zone, '+09:00'), '%Y%m%d%H%i%s')
+			sch_dt_run = DATE_FORMAT(now(), '%Y%m%d%H%i%s')
 			, is_force = 0
 		WHERE 1 = 1
 			AND sch_no = req_sch_no
-			AND org_cd = req_org_cd
-			AND job_cd = req_job_cd
 		;
 		
-	/*
 		COMMIT;
-	*/
-	/* transaction */
 	
 	SET res_result = 1;
 	
 END $$
 DELIMITER
 ;
+*/
 /*
 	x0100 run configuration
-*/
 CREATE VIEW IF NOT EXISTS v_dart_x0100_run
 AS
 SELECT
@@ -135,33 +233,177 @@ WHERE 1 = 1
 	AND job_cd = 'x0100'
 LIMIT 1
 ;
+*/
 /*
 	dart corporation list
 */
+DROP TABLE IF EXISTS t_dart_x0100;
 CREATE TABLE IF NOT EXISTS t_dart_x0100 (
-	crp_cd        varchar(36)   NOT NULL             COMMENT 'finsight unique code'
-	, dt_ir       bigint        NOT NULL             COMMENT '1st insert datetime'
-	, dt_ur       bigint        NOT NULL             COMMENT 'last update datetime'
-	, dt_ex       bigint        NOT NULL  DEFAULT 0  COMMENT 'extract date'
-	, is_hidden   int           NOT NULL  DEFAULT 0  COMMENT 'hidden option'
-	, cik_cd      varchar(16)   NOT NULL             COMMENT 'dart record code'
-	, crp_nm_kr   varchar(128)      NULL             COMMENT 'corporation korean name'
-	, crp_nm_en   varchar(128)      NULL             COMMENT 'corporation english name'
-	, crp_nm_mrk  varchar(128)      NULL             COMMENT 'corporation market name'
-	, itm_cd      varchar(8)        NULL             COMMENT 'item code'
-	, ceo_nm      varchar(128)      NULL             COMMENT ''
-	, mrk_tp_nm   varchar(16)       NULL             COMMENT 'market type name'
-	, mrk_tp_cd   varchar(1)        NULL             COMMENT 'P: KOSPI, A: KOSDAQ, N: KONEX, E: etc'
-	, crp_no      varchar(16)       NULL             COMMENT 'corporation number'
-	, biz_no      varchar(16)       NULL             COMMENT 'business registation number'
-	, crp_addr    varchar(128)      NULL             COMMENT 'corporation address'
-	, crp_url     varchar(128)      NULL             COMMENT 'corporation url homepage'
-	, crp_url_ir  varchar(128)      NULL             COMMENT 'corporation url ir page'
-	, crp_tel     varchar(64)       NULL             COMMENT 'corporation tel'
-	, crp_fax     varchar(64)       NULL             COMMENT 'corporation fax'
-	, biz_tp_nm   varchar(256)      NULL             COMMENT 'business type name'
-	, dt_fnd      varchar(16)       NULL             COMMENT 'foundation date'
-	, dt_fy       varchar(2)        NULL             COMMENT 'accounting fiscal year'
+	crp_cd         varchar(5)    NOT NULL             COMMENT '기업코드(종목코드 앞 5자리)'
+	, dt_ir        varchar(14)   NOT NULL             COMMENT '최초등록일'
+	, dt_ur        varchar(14)   NOT NULL             COMMENT '최신수정일'
+	, ext_dt       varchar(14)       NULL             COMMENT '수집일자'
+	, ext_rsl_cd   varchar(4)        NULL             COMMENT '수집결과코드'
+	, ext_rsl_msg  varchar(128)      NULL             COMMENT '수집결과메시지'
+	, ext_srv_cd   varchar(36)       NULL             COMMENT '수집서버아이디'
+	, is_hidden    int           NOT NULL  DEFAULT 0  COMMENT '사용여부'
+	, cik_cd       varchar(16)   NOT NULL             COMMENT '회사고유번호'
+	, crp_nm_kr    varchar(128)      NULL             COMMENT '기업명 한글'
+	, crp_nm_en    varchar(128)      NULL             COMMENT '기업명 영문'
+	, crp_nm_mrk   varchar(128)      NULL             COMMENT '기업명 상장'
+	, itm_cd       varchar(8)        NULL             COMMENT '종목코드'
+	, ceo_nm       varchar(128)      NULL             COMMENT '대표자명'
+	, mrk_typ_nm   varchar(16)       NULL             COMMENT '시장구분'
+	, mrk_typ_cd   varchar(1)        NULL             COMMENT 'P: KOSPI, A: KOSDAQ, N: KONEX, E: etc'
+	, crp_no       varchar(16)       NULL             COMMENT '법인등록번호'
+	, biz_no       varchar(32)       NULL             COMMENT '사업자등록번호'
+	, crp_addr     varchar(128)      NULL             COMMENT '회사주소'
+	, crp_url      varchar(128)      NULL             COMMENT '회사URL'
+	, crp_url_ir   varchar(128)      NULL             COMMENT 'IR URL'
+	, crp_tel      varchar(64)       NULL             COMMENT '전화번호'
+	, crp_fax      varchar(64)       NULL             COMMENT '팩스번호'
+	, biz_tp_nm    varchar(256)      NULL             COMMENT '업종명'
+	, dt_fnd       varchar(16)       NULL             COMMENT '설립일'
+	, cls_mon      int               NULL             COMMENT '결산월'
 	, PRIMARY KEY (crp_cd)
-) COMMENT='dart corporation list'
+) COMMENT='기업목록'
 ;
+/*
+	dart report list
+*/
+DROP TABLE IF NOT EXISTS t_dart_x0200;
+CREATE TABLE IF NOT EXISTS t_dart_x0200 (
+	crp_cd         varchar(5)    NOT NULL             COMMENT '기업코드'
+	, rcp_no       varchar(16)    NOT NULL             COMMENT '보고서번호'
+	, dt_ir        varchar(14)    NOT NULL             COMMENT '최초등록일'
+	, dt_ur        varchar(14)    NOT NULL             COMMENT '최신수정일'
+	, ext_dt       varchar(14)        NULL             COMMENT '수집일자'
+	, ext_rsl_cd   varchar(4)         NULL             COMMENT '수집결과코드'
+	, ext_rsl_msg  varchar(128)       NULL             COMMENT '수집결과메시지'
+	, ext_srv_cd   varchar(36)        NULL             COMMENT '수집서버아이디'
+	, is_hidden    int            NOT NULL  DEFAULT 0  COMMENT '사용여부'
+	, cik_cd       varchar(16)        NULL             COMMENT '회사고유번호(수집,FK아님)'
+	, crp_nm       varchar(128)       NULL             COMMENT '기업명(수집)'
+	, rcp_nm       varchar(128)       NULL             COMMENT '보고서명'
+	, sbm_nm       varchar(128)       NULL             COMMENT '제출인'
+	, rcv_dt       varchar(8)         NULL             COMMENT '접수일자'
+	, note         varchar(1024)      NULL             COMMENT '비고'
+	, dcm_no       varchar(16)        NULL             COMMENT '문서번호'
+	, is_ext       int                NULL  DEFAULT 0  COMMENT '수집여부'
+	, PRIMARY KEY (crp_cd, rcp_no)
+) COMMENT='보고서 목록'
+;
+/*
+	x0200 run configuration
+*/
+CREATE VIEW IF NOT EXISTS v_dart_x0200_run
+AS
+SELECT
+	sch_no    AS schNo
+	, org_cd  AS orgCd
+	, job_cd  AS jobCd
+	, sch_slp AS sleep
+	, CASE
+		WHEN is_force = 1 THEN 1
+		ELSE 0
+		END AS isRun
+	, 'P'        AS corporationType
+	, '20180701' AS startDate
+	, '20180720' AS endDate
+FROM
+	t_sch_cnf
+WHERE 1 = 1
+	AND org_cd = 'dart'
+	AND job_cd = 'x0200'
+LIMIT 1
+;
+/*
+	dart download report list
+*/
+CREATE TABLE IF NOT EXISTS t_dart_x0300 (
+	crp_cd         varchar(36)    NOT NULL             COMMENT '기업코드'
+	, rcp_no       varchar(16)    NOT NULL             COMMENT '보고서번호'
+	, rpt_srt_cd   varchar(8)     NOT NULL             COMMENT 'BS: balace sheet, IS: income statement, CF: statement of cash flows, CI: statement of comprehensive income'
+	, acc_no       int            NOT NULL             COMMENT '회계기수'
+	, dt_ir        varchar(14)    NOT NULL             COMMENT '최초등록일'
+	, dt_ur        varchar(14)    NOT NULL             COMMENT '최신수정일'
+	, ext_dt       varchar(14)        NULL             COMMENT '수집일자'
+	, ext_rsl_cd   varchar(4)         NULL             COMMENT '수집결과코드'
+	, ext_rsl_msg  varchar(128)       NULL             COMMENT '수집결과메시지'
+	, ext_srv_cd   varchar(36)        NULL             COMMENT '수집서버아이디'
+	, is_hidden    int            NOT NULL  DEFAULT 0  COMMENT '사용여부'
+	, dcm_no       varchar(16)        NULL             COMMENT '다운로드번호'
+	, dcm_pth      varchar(128)       NULL             COMMENT '문서저장경로'
+	, rpt_type_nm  varchar(128)       NULL             COMMENT '보고서유형'
+	, is_crr       varchar(4)         NULL             COMMENT '정정공시여부'
+	, rpt_iss_dt   varchar(8)         NULL             COMMENT '문서작성일'
+	, acc_dt_str   varchar(8)         NULL             COMMENT '회계기간시작일'
+	, acc_dt_end   varchar(8)         NULL             COMMENT '회계기간종료일'
+	, cik_cd       varchar(16)        NULL             COMMENT '회사고유번호(수집)'
+	, acc_dt_cls   varchar(8)         NULL             COMMENT '결산월'
+	, sum_emp      int                NULL  DEFAULT 0  COMMENT '종업원수'
+	, sum_shr      int                NULL  DEFAULT 0  COMMENT '주주수'
+	, ind_cls_cd   varchar(8)         NULL             COMMENT '표준산업분류코드'
+	, cur_iso_cd   varchar(8)         NULL             COMMENT '통화ISO코드'
+	, PRIMARY KEY (crp_cd, rcp_no, rpt_srt_cd, acc_no)
+) COMMENT='보고서 다운로드 및 수집 목록'
+;
+/*
+	x0300 run configuration
+*/
+CREATE VIEW IF NOT EXISTS v_dart_x0300_run
+AS
+SELECT
+	sch_no    AS schNo
+	, org_cd  AS orgCd
+	, job_cd  AS jobCd
+	, sch_slp AS sleep
+	, CASE
+		WHEN is_force = 1 THEN 1
+		ELSE 0
+		END AS isRun
+FROM
+	t_sch_cnf
+WHERE 1 = 1
+	AND org_cd = 'dart'
+	AND job_cd = 'x0300'
+LIMIT 1
+;
+CREATE VIEW IF NOT EXISTS v_dart_x0301_run
+AS
+SELECT
+	'dart'    AS orgCd
+	, 'x0300' AS jobCd
+	, crp_cd  AS crpCd
+	, rcp_no  AS rcpNo
+	, dcm_no  AS dcmNo
+	, 'ko'    AS lang
+FROM
+	t_dart_x0200
+WHERE 1 = 1
+	AND is_ext = 0
+;
+/*
+	dart report detail
+*/
+CREATE TABLE IF NOT EXISTS t_dart_x0301 (
+	crp_cd         varchar(36)    NOT NULL             COMMENT '기업코드'
+	, rcp_no       varchar(16)    NOT NULL             COMMENT '보고서번호'
+	, rpt_srt_cd   varchar(8)     NOT NULL             COMMENT 'BS: balace sheet, IS: income statement, CF: statement of cash flows, CI: statement of comprehensive income'
+	, acc_no       int            NOT NULL             COMMENT '회계기수'
+	, acc_ord      int            NOT NULL  DEFAULT 0  COMMENT '계정순서'
+	, dt_ir        varchar(14)    NOT NULL             COMMENT '최초등록일'
+	, dt_ur        varchar(14)    NOT NULL             COMMENT '최신수정일'
+	, is_hidden    int            NOT NULL  DEFAULT 0  COMMENT '사용여부'
+	, acc_nm       varchar(128)       NULL             COMMENT '계정명'
+	, acc_dpt      varchar(8)         NULL             COMMENT '계정위치'
+	, acc_nm_cd    varchar(8)         NULL             COMMENT '계정코드'
+	, acc_val      bigint             NULL  DEFAULT 0  COMMENT '계정값(NULL 또는 BLANK 인 경우 -1)'
+	, acc_val_sgn  int                NULL  DEFAULT 1  COMMENT '계정부호(NULL 또는 BLANK 인 경우 0)'
+	, acc_val_unt  varchar(8)         NULL             COMMENT '단위'
+	, inc_qoq      decimal(4, 4)      NULL  DEFAULT 0  COMMENT '전분기 대비 증감율'
+	, inc_yoy      decimal(4, 4)      NULL  DEFAULT 0  COMMENT '전년도 대비 증감율'
+	, PRIMARY KEY (crp_cd, rcp_no, rpt_srt_cd, acc_no, acc_ord)
+) COMMENT='보고서 상세내역'
+;
+
