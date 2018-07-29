@@ -406,4 +406,36 @@ CREATE TABLE IF NOT EXISTS t_dart_x0301 (
 	, PRIMARY KEY (crp_cd, rcp_no, rpt_srt_cd, acc_no, acc_ord)
 ) COMMENT='보고서 상세내역'
 ;
-
+/*
+	종목코드정보
+*/
+CREATE TABLE IF NOT EXISTS t_stock_x0100 (
+	crp_cd         varchar(5)    NOT NULL             COMMENT '기업코드(종목코드 앞 5자리)'
+	, itm_cd       varchar(8)    NOT NULL             COMMENT '종목코드'
+	, dt_ir        varchar(14)   NOT NULL             COMMENT '최초등록일'
+	, dt_ur        varchar(14)   NOT NULL             COMMENT '최신수정일'
+	, ext_srv_cd   varchar(36)       NULL             COMMENT '수집서버아이디'
+	, is_hidden    int           NOT NULL  DEFAULT 0  COMMENT '사용여부'
+	, crp_nm       varchar(128)      NULL             COMMENT '기업명'
+	, PRIMARY KEY (crp_cd, itm_cd)
+) COMMENT='종목코드정보'
+;
+/*
+	증시 과거 내역
+*/
+CREATE TABLE IF NOT EXISTS t_stock_x0200 (
+	itm_cd       varchar(8)    NOT NULL             COMMENT '종목코드'
+	, dt_mrk       varchar(14)   NOT NULL             COMMENT '시세 시장시간(한국KST)'
+	, dt_ir        varchar(14)   NOT NULL             COMMENT '최초등록일'
+	, dt_ur        varchar(14)   NOT NULL             COMMENT '최신수정일'
+	, ext_srv_cd   varchar(36)       NULL             COMMENT '수집서버아이디'
+	, is_hidden    int           NOT NULL  DEFAULT 0  COMMENT '사용여부'
+	, val_opn      decimal           NULL             COMMENT '시가'
+	, val_cls      decimal           NULL             COMMENT '종가'
+	, val_adj      decimal           NULL             COMMENT '수정가'
+	, val_hgh      decimal           NULL             COMMENT '최고가'
+	, val_low      decimal           NULL             COMMENT '최저가'
+	, trd_vol      bigint            NULL             COMMENT '거래량'
+	, PRIMARY KEY (itm_cd, dt_mrk)
+) COMMENT='증시내'
+;
