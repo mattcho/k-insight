@@ -437,5 +437,5 @@ CREATE TABLE IF NOT EXISTS t_stock_x0200 (
 	, val_low      decimal           NULL             COMMENT '최저가'
 	, trd_vol      bigint            NULL             COMMENT '거래량'
 	, PRIMARY KEY (itm_cd, dt_mrk)
-) COMMENT='증시내'
+) COMMENT='증시내역'
 ;
